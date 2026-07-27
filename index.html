@@ -323,17 +323,20 @@ function buscar(){
   const g = mdc(novo, atual);
   const rNovo = Math.round(novo/g), rAtual = Math.round(atual/g);
 
+  // Novo pacote == atual NÃO é reajuste real: nesses casos o novo pacote ainda não foi
+  // preenchido na planilha (só o ID foi adicionado ao link). Como TODO cliente terá reajuste
+  // (mesmo que mínimo), tratamos 1:1 como pendência e não deixamos calcular up sobre uma
+  // proporção falsa — mesmo padrão do caso "pacote atual = 0".
   if(Math.abs(ratio-1) < 1e-9){
-    html += '<div class="prop">'
-      + '<div><div class="rot">Proporção deste cliente</div><div class="mult">1 : 1</div></div>'
-      + '<div class="exp">O pacote não foi reajustado ('+fmt.format(atual)+' → '+fmt.format(novo)+'). Os ups seguem o mesmo valor.</div>'
-      + '</div>';
-  } else {
-    html += '<div class="prop">'
-      + '<div><div class="rot">Proporção deste cliente</div><div class="mult">×'+fmtDec.format(ratio)+'</div></div>'
-      + '<div class="exp">Pacote foi de <b>'+fmt.format(atual)+' → '+fmt.format(novo)+'</b> (proporção '+rNovo+':'+rAtual+'). Cada up é multiplicado por '+fmtDec.format(ratio)+'.</div>'
-      + '</div>';
+    html += aviso('warn','⚠️','<b>Novo pacote ainda não preenchido</b> para este cliente na planilha (ficou igual ao atual — provavelmente só o ID foi adicionado ao link). Como todos os clientes terão reajuste, este 1:1 é provisório: confirme o novo pacote com a liderança antes de calcular o up.');
+    elRes.innerHTML = html;
+    return;
   }
+
+  html += '<div class="prop">'
+    + '<div><div class="rot">Proporção deste cliente</div><div class="mult">×'+fmtDec.format(ratio)+'</div></div>'
+    + '<div class="exp">Pacote foi de <b>'+fmt.format(atual)+' → '+fmt.format(novo)+'</b> (proporção '+rNovo+':'+rAtual+'). Cada up é multiplicado por '+fmtDec.format(ratio)+'.</div>'
+    + '</div>';
 
   html += '<div class="sim">'
     + '<h3>Conversão do up</h3>'
