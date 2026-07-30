@@ -204,7 +204,7 @@ let CLIENTES = [];
 const fmt = new Intl.NumberFormat('pt-BR');
 const fmtDec = new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:4});
 let porId = {};
-function indexar(){ porId = {}; CLIENTES.forEach(c => porId[String(c.id)] = c); }
+function indexar(){ porId = {}; CLIENTES.forEach(c => { c.id = String(c.id).replace(/\D/g,''); porId[c.id] = c; }); }
 indexar();
 
 const elRes = document.getElementById('resultado');
@@ -416,8 +416,8 @@ async function carregarAoVivo(){
     const seen={}, dados=[];
     for(const r of rows){
       if(r.length<4) continue;
-      const id=String(r[0]).trim();
-      if(!/^\d+$/.test(id) || seen[id]) continue; // pula header, vazios e duplicados
+      const id=String(r[0]).replace(/\D/g,''); // normaliza: tira ponto de milhar/qualquer formatação do Sheets
+      if(!id || seen[id]) continue; // pula header, vazios e duplicados
       seen[id]=true;
       dados.push({ id, razao:String(r[1]).trim(), atual:numero(r[2]), novo:numero(r[3]) });
     }
