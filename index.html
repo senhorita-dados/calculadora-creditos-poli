@@ -413,13 +413,19 @@ async function carregarAoVivo(){
     const resp=await fetch(CSV_URL,{cache:'no-store'});
     if(!resp.ok) throw new Error('HTTP '+resp.status);
     const rows=parseCSV(await resp.text());
+    if(!rows.length) throw new Error('CSV vazio');
+    // Acha as colunas pelo NOME do cabeçalho — robusto a ordem e a colunas extras (ex.: "Tipo de Canais")
+    const head = rows[0].map(h => norm(h).trim());
+    const acha = (...ks) => head.findIndex(h => ks.some(k => h.includes(k)));
+    const idxId = head.findIndex(h => h==='id');
+    const rz=acha('razao'), at=acha('contratados hoje','pacote atual'), nv=acha('novo pacote');
+    const cId=idxId>=0?idxId:0, cRazao=rz>=0?rz:1, cAtual=at>=0?at:2, cNovo=nv>=0?nv:3;
     const seen={}, dados=[];
     for(const r of rows){
-      if(r.length<4) continue;
-      const id=String(r[0]).replace(/\D/g,''); // normaliza: tira ponto de milhar/qualquer formatação do Sheets
-      if(!id || seen[id]) continue; // pula header, vazios e duplicados
+      const id=String(r[cId]??'').replace(/\D/g,''); // normaliza; cabeçalho "ID" vira '' e é pulado
+      if(!id || seen[id]) continue;
       seen[id]=true;
-      dados.push({ id, razao:String(r[1]).trim(), atual:numero(r[2]), novo:numero(r[3]) });
+      dados.push({ id, razao:String(r[cRazao]??'').trim(), atual:numero(r[cAtual]), novo:numero(r[cNovo]) });
     }
     if(!dados.length) throw new Error('CSV vazio');
     CLIENTES=dados; indexar(); marcarFonte('vivo');
